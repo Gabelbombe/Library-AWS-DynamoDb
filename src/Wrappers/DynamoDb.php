@@ -96,12 +96,20 @@ Namespace Wrappers
             return $newTargets;
         }
 
-
-
-
+        /**
+         * Returns a string or an array of strings
+         *
+         * @param $value
+         * @return array|string
+         */
         protected function asString($value)
         {
-            // stub out
+            if (! is_array($value)) return (string) $value;
+
+            $newValue = [];
+            foreach ($value AS $v) $newValue[] = (string) $v;
+
+            return $newValue;
         }
     }
 }
