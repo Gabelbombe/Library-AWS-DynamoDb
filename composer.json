@@ -1,0 +1,17 @@
+{
+  "name": "ehime/DynamoDB-Wrapper",
+  "homepage": "http://github.com/DynamoDB-Wrapper/wiki",
+  "description": "PHP Wrapper for DynamoDB",
+  "keywords": ["aws","amazon","dynamo","php"],
+  "type": "library",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "Jd Daniel :: Ehime-ken",
+      "homepage": "http://linkedin.com/in/ehimeprefecture"
+    }
+  ],
+  "require": {
+    "aws/aws-sdk-php": "2.*"
+  }
+}
