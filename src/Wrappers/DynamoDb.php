@@ -38,20 +38,26 @@ Namespace Wrappers
             ];
 
             if (isset($options['ConsistentRead']))
-
+            {
                 $args['ConsistentRead'] = $options['ConsistentRead'];
+            }
 
             $item = $this->client->getItem($args);
 
             return $this->convertItem($item['Item']);
         }
 
+        protected function convertComponents()
+        {
+            // stub out
+        }
+
         /**
-         * @param $item
+         * @param array $item
          * @return array|null
          * @throws \Exception
          */
-        protected function convertItem($item)
+        protected function convertItem(array $item)
         {
             if (empty($item)) return null;
 
@@ -71,7 +77,29 @@ Namespace Wrappers
             return $converted;
         }
 
-        protected function convertAttributes($targets)
+        /**
+         * @param array $targets
+         * @return array
+         */
+        protected function convertAttributes(array $targets)
+        {
+            $newTargets = [];
+            foreach ($targets AS $k => $v)
+            {
+                $attrComponents = $this->convertComponents($k);
+
+                $newTargets[$attrComponents[0]] = [
+                    $attrComponents[1] = $this->asString($v)
+                ];
+            }
+
+            return $newTargets;
+        }
+
+
+
+
+        protected function asString($value)
         {
             // stub out
         }
