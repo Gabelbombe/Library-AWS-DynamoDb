@@ -47,11 +47,6 @@ Namespace Wrappers
             return $this->convertItem($item['Item']);
         }
 
-        protected function convertComponents()
-        {
-            // stub out
-        }
-
         /**
          * @param array $item
          * @return array|null
@@ -94,6 +89,23 @@ Namespace Wrappers
             }
 
             return $newTargets;
+        }
+
+        /**
+         * Convert string attribute parameter into an array of components.
+         *
+         * @param $attribute    double colon separated string "<Attribute Name>::<Attribute Type>"
+         * @return array        parsed parameter. [0]=<Attribute Name>, [1]=<Attribute Type>
+         */
+        protected function convertComponents($attribute)
+        {
+            $components = explode('::', $attribute);
+            if (count($components) > 2)
+            {
+                $components[1] = 'S';
+            }
+
+            return $components;
         }
 
         /**
