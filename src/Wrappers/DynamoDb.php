@@ -1,4 +1,7 @@
 <?php
+/**
+ *
+ */
 Namespace Wrappers
 {
     require dirname(dirname(__DIR__)) . '/vendor/autoload.php';
@@ -6,28 +9,39 @@ Namespace Wrappers
     USE Aws\DynamoDb\DynamoDbClient;
     USE Aws\DynamoDb\Exception\ConditionalCheckFailedException;
 
+
+    /**
+     * Interface WrapperInterface
+     * @package Wrappers
+     */
     Interface WrapperInterface
     {
         // Gets
-        public function get      ($tableName, $key,         array $options);
-        public function getBatch ($tableName, array $keys,  array $options);
+        public function get         ($tableName, $key,         array $options);
+        public function getBatch    ($tableName, array $keys,  array $options);
 
         // Puts
-        public function put      ($tableName, $item,        array $expected);
-        public function putBatch ($tableName, $items);
+        public function put         ($tableName, $item,        array $expected);
+        public function putBatch    ($tableName, $items);
 
         // Queries
-        public function query    ($tableName, $conditions,  array $options);
+        public function query       ($tableName, $conditions,  array $options);
 
         // Deletes
+        public function delete      ($tableName, $key);
+        public function deleteBatch ($tableName, $keys);
 
         // Table Manipulation
 
         // Misc
-        public function count    ($tableName, $conditions,  array $options);
-        public function scan     ($tableName, $filter,      $limit);
+        public function count       ($tableName, $conditions,  array $options);
+        public function scan        ($tableName, $filter,      $limit);
     }
 
+    /**
+     * Class DynamoDb
+     * @package Wrappers
+     */
     Class DynamoDb Implements WrapperInterface
     {
         protected $client;
@@ -273,9 +287,28 @@ Namespace Wrappers
             return $this->convertItem($item['Attributes']);
         }
 
+        /**
+         * @param $tableName
+         * @param $key
+         * @return array|null
+         * @throws \Exception
+         */
         public function delete($tableName, $key)
         {
+            $args = [
+                'TableName'         => $tableName,
+                'Key'               => $this->convertAttributes($key),
+                'ReturnValues'      => 'ALL_OLD',
+            ];
 
+            $result = $this->client->deleteItem($args);
+
+            return $this->convertItem($result['Attributes']);
+        }
+
+        public function deleteBatch($tableName, $keys)
+        {
+            return $this->writeBatch('DeleteRequest', $tableName, $keys);
         }
 
         /**
@@ -285,7 +318,7 @@ Namespace Wrappers
          * @return array|null
          * @throws \Exception
          */
-        public function convertItems($items)
+        protected function convertItems($items)
         {
             $converted = [];
             foreach ($items AS $item) $converted = $this->convertItem($item);
