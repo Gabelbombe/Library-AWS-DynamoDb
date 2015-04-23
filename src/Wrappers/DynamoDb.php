@@ -126,7 +126,7 @@ Namespace Wrappers
 
             if (count($unprocessedKeys) > 0)
             {
-                // Goes nowhere ATM....
+                /* @ignore */ // Goes nowhere ATM....
                 $ddbKeys = array_merge($ddbKeys, $unprocessedKeys);
             }
 
@@ -265,7 +265,7 @@ Namespace Wrappers
          * @param $update
          * @param array $expected
          * @return array|null
-         * @throws ConditionalCheckFailedException
+         * @throws ConditionalCheckFailedException|\LogicException
          */
         public function update($tableName, $key, $update, array $expected = [])
         {
@@ -288,6 +288,8 @@ Namespace Wrappers
             {
                 return null;
             }
+
+            if (! isset($item) || empty($item)) Throw New \LogicException('Item was never instantiated.');
 
             return $this->convertItem($item['Attributes']);
         }
