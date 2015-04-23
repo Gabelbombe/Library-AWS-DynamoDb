@@ -89,6 +89,9 @@ Namespace Wrappers
         }
 
         /**
+         * Wrapper for BatchGetItem
+         * @link http://docs.aws.amazon.com/amazondynamodb/latest/APIReference//API_BatchGetItem.html
+         * 
          * TODO: usort() needs to be cleaned...
          * TODO: $ddKeys need to be pushed out so they run next pass...
          *
