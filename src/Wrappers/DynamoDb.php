@@ -54,7 +54,6 @@ Namespace Wrappers
          * @link http://docs.aws.amazon.com/aws-sdk-php/v2/guide/configuration.html#client-configuration-options
          *
          * @param $args
-         * @return void
          */
         public function __construct($args)
         {
@@ -68,6 +67,9 @@ Namespace Wrappers
          * @param $tableName
          * @param $key
          * @param array $options
+         * @return array|null
+         * @throws \Exception
+
          */
         public function get($tableName, $key, array $options = [])
         {
