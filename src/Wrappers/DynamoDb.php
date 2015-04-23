@@ -316,6 +316,14 @@ Namespace Wrappers
             return $this->writeBatch('DeleteRequest', $tableName, $keys);
         }
 
+        /**
+         * Creates a DynamoDB table based on params.
+         *
+         * @param $tableName
+         * @param $hashKey
+         * @param null $rangeKey
+         * @param null $options
+         */
         public function createTable($tableName, $hashKey, $rangeKey = null, $options = null)
         {
             $attributeDefinitions =
@@ -374,9 +382,18 @@ Namespace Wrappers
                             'ProjectionType'  => $lsi['projection_type'],
                         ],
                     ];
+                    $attributeDefinitions[] = [
+                        'AttributeName' => $lsi['name'],
+                        'AttributeType' => $lsi['type'],
+                    ];
                 }
+
+                $args['LocalSecondaryINdexes'] = $localSecondaryIndexes;
+                $args['AttributeDefinitions']  = $attributeDefinitions;
             }
 
+            $this->client->createTable($args);
+            $this->client->waitUntilTableExists(['TableName' => $tableName]);
         }
 
         /**
