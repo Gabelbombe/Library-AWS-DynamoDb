@@ -306,9 +306,77 @@ Namespace Wrappers
             return $this->convertItem($result['Attributes']);
         }
 
+        /**
+         * @param $tableName
+         * @param $keys
+         * @return bool
+         */
         public function deleteBatch($tableName, $keys)
         {
             return $this->writeBatch('DeleteRequest', $tableName, $keys);
+        }
+
+        public function createTable($tableName, $hashKey, $rangeKey = null, $options = null)
+        {
+            $attributeDefinitions =
+            $keySchema            = [];
+
+            // HashKey
+            $hashKeyComponents = $this->convertComponents($hashKey);
+            $hashKeyName = $hashKeyComponents[0];
+            $hashKeyType = $hashKeyComponents[1];
+            $attributeDefinitions[] = [
+                [ 'AttributeName' => $hashKeyName, 'AttributeType' => $hashKeyType ]
+            ];
+            $keySchema[] = [
+                [ 'AttributeName' => $hashKeyName, 'KeyType' => 'HASH' ]
+
+            ];
+
+            // RangeKey
+            if (isset($rangeKey))
+            {
+                $rangeKeyComponent = $this->convertComponents($rangeKey);
+                $rangeKeyName = $rangeKeyComponent[0];
+                $rangeKeyType = $rangeKeyComponent[1];
+                $attributeDefinitions[] = [
+                    [ 'AttributeName' => $rangeKeyName, 'AttributeType' => $rangeKeyType ]
+                ];
+                $keySchema[] = [
+                    [ 'AttributeName' => $rangeKeyName, 'KeyType' => 'RANGE' ]
+
+                ];
+            }
+
+            // Generate arguments
+            $args = [
+                'TableName'             => $tableName,
+                'AttributeDefinitions'  => $attributeDefinitions,
+                'KeySchema'             => $keySchema,
+                'ProvisionedThroughput' => [
+                    'ReadCapacityUnites'    => 1,
+                    'WriteCapacityUnites'   => 1,
+                ]
+            ];
+
+            // Set LocalSecondaryIndexes [if needed]
+            if (isset($options['LocalSecondaryIndexes']))
+            {
+                foreach ($options['LocalSecondaryIndexes'] AS $lsi)
+                {
+                    $localSecondaryIndexes[] = [
+                        'IndexName' => "{$lsi['name']}Index", //concat
+                        'KeySchema' => [
+                            [ 'AttributeName' => $hashKeyName, 'KeyType' => 'HASH'  ],
+                            [ 'AttributeName' => $lsi['name'], 'KeyType' => 'RANGE' ],
+                        ],
+                        'Projection' => [
+                            'ProjectionType'  => $lsi['projection_type'],
+                        ],
+                    ];
+                }
+            }
+
         }
 
         /**
