@@ -89,6 +89,7 @@ Namespace Wrappers
                 $ddbKeys = array_merge($ddbKeys, $unprocessedKeys);
             }
 
+
             /* Proposed fix for empty ddbKeys going nowhere...
              *
              * if (! empty($this->ddbKeys)) { $ddbKeys = $this->ddbKeys; $this->ddbKeys = null; }
@@ -114,6 +115,44 @@ Namespace Wrappers
         }
 
         /**
+         * @param $tableName
+         * @param $keyConditions
+         * @param array $options
+         */
+        public function query($tableName, $keyConditions, array $options = [])
+        {
+            $args = [
+                'TableName'         => $tableName,
+                'KeyConditions'     => $keyConditions,
+                'ScanIndexForward'  => true,
+                'Limit'             => 100,
+            ];
+
+            if (isset($options['ConsistentRead']))    $args['ConsistentRead']    = $options['ConsistentRead'];
+            if (isset($options['IndexName']))         $args['IndexName']         = $options['IndexName'];
+            if (isset($options['Limit']))             $args['Limit']             = $options['Limit'] + 0;
+            if (isset($options['ExclusiveStartKey'])) $args['ExclusiveStartKey'] = $this->convertAttributes(
+                $options['ExclusiveStartKey']
+            );
+
+            return $this->convertItems($this->client->query($args));
+        }
+
+        /**
+         * Alias for convertItem()
+         *
+         * @param $items
+         * @return array|null
+         * @throws \Exception
+         */
+        public function convertItems($items)
+        {
+            $converted = [];
+            foreach ($items AS $item) $converted = $this->convertItem($item);
+            return $converted;
+        }
+
+        /**
          * @param array $item
          * @return array|null
          * @throws \Exception
@@ -136,11 +175,6 @@ Namespace Wrappers
             }
 
             return $converted;
-        }
-
-        protected function convertItems()
-        {
-            // stub out
         }
 
         /**
