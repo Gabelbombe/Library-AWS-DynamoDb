@@ -198,14 +198,62 @@ Namespace Wrappers
             try
             {
                 $this->client->putItem($args);
-
-                return true;
             }
 
             catch (ConditionalCheckFailedException $ccf)
             {
                 return false;
             }
+
+            return true;
+        }
+
+        /**
+         * @param $tableName
+         * @param $items
+         * @return mixed
+         */
+        public function batchPut($tableName, $items)
+        {
+            return $this->batchWrite('PutRequest', $tableName, $items);
+        }
+
+        /**
+         * @param $tableName
+         * @param $key
+         * @param $update
+         * @param array $expected
+         * @return array|null
+         * @throws ConditionalCheckFailedException
+         */
+        public function update($tableName, $key, $update, array $expected = [])
+        {
+            $args = [
+                'TableName'         => $tableName,
+                'Key'               => $key,
+                'AttributeUpdates'  => $this->convertUpdateAttributes($update),
+                'ReturnValues'      => 'UPDATE_NEW',
+            ];
+
+            if (! empty($expected)) $item['Expected'] = $expected;
+
+            // Put and catch exception with Dynamo's ConditionalCheckFailed
+            try
+            {
+                $this->client->updateItem($args);
+            }
+
+            catch (ConditionalCheckFailedException $ccf)
+            {
+                return null;
+            }
+
+            return $this->convertItem($item['Attributes']);
+        }
+
+        public function delete($tableName, $key)
+        {
+
         }
 
         /**
@@ -245,6 +293,64 @@ Namespace Wrappers
             }
 
             return $converted;
+        }
+
+        /**
+         * @param array $targets
+         * @return array
+         */
+        protected function convertUpdateAttributes(array $targets)
+        {
+            $newTargets = [];
+            foreach ($targets AS $k => $v)
+            {
+                $attrComponents = $this->convertComponents($k);
+                $newTargets[$attrComponents[0]] = [
+                    'Action'    => $v[0],
+                    'Value'     => [
+                        $attrComponents[1] => $this->asString($v[1])
+                    ],
+                ];
+            }
+
+            return $newTargets;
+        }
+
+        protected function convertConditions($conditions)
+        {
+            $ddbConditions = [];
+            foreach ($conditions AS $k => $v)
+            {
+                // gets attribs name and type...
+                $attrComponent = $this->convertComponents($k);
+                $attrName      = $attrComponent[0];
+                $attrType      = $attrComponent[1];
+
+                // gets ComparisonOperator and its value...
+                if (! is_array($v))
+                {
+                    $v = [
+                        'EQ', $this->asString($v)
+                    ];
+                }
+
+                $comparisonOperator = $v[0];
+
+                $value = (count($v) > 1)
+                    ? $v[1]
+                    : null;
+
+                // get AttributeValueList...
+                if ('BETWEEN' === $v[0])
+                {
+                    if (2 !== count($value)) Throw New \Exception ('BETWEEN requires 2 values as an array.');
+                    $attributeValueList = [
+                        [ $attrType => $this->asString($value[0]) ],
+                        [ $attrType => $this->asString($value[1]) ],
+                    ];
+                } elseif ('IN' === $v[0])
+                    <<<<<<<<<<<<<<<<<<<<<380>>>>>>>>>>>>>>>>>>>>>>
+            }
         }
 
         /**
