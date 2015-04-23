@@ -82,11 +82,18 @@ Namespace Wrappers
 
             // If some keys are not processed, attempt again on next request.
             $unprocessedKeys = $result->getPath("UnprocessedKeys/{$tableName}");
+
             if (count($unprocessedKeys) > 0)
             {
                 // Goes nowhere ATM....
                 $ddbKeys = array_merge($ddbKeys, $unprocessedKeys);
             }
+
+            /* Proposed fix for empty ddbKeys going nowhere...
+             *
+             * if (! empty($this->ddbKeys)) { $ddbKeys = $this->ddbKeys; $this->ddbKeys = null; }
+             */
+
 
             if (isset($options['Order']))
             {
