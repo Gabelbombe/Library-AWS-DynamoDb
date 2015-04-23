@@ -139,6 +139,76 @@ Namespace Wrappers
         }
 
         /**
+         * @param $tableName
+         * @param $keyConditions
+         * @param array $options
+         * @return integer|null
+         */
+        public function count($tableName, $keyConditions, array $options = [])
+        {
+            $args = [
+                'TableName'         => $tableName,
+                'KeyConditions'     => $keyConditions,
+                'Select'            => 'COUNT',
+            ];
+
+            if (isset($options['IndexName'])) $args['IndexName'] = $options['IndexName'];
+
+            return $this->client->query($args) ['Count'];
+        }
+
+        /**
+         * @param $tableName
+         * @param $filter
+         * @param null $limit
+         * @return array|null
+         */
+        public function scan($tableName, $filter, $limit = null)
+        {
+            $scanFilter = (! empty($filter))
+                ? $this->convertConditions($filter)
+                : null;
+
+            $items = $this->client->getIterator('Scan', [
+                'TableName'     => $tableName,
+                'ScanFilter'    => $scanFilter,
+                'Limit'         => $limit,
+            ]);
+
+            return $this->convertItems($items);
+        }
+
+        /**
+         * @param $tableName
+         * @param $item
+         * @param array $expected
+         * @return bool
+         * @throws ConditionalCheckFailedException
+         */
+        public function put($tableName, $item, array $expected = [])
+        {
+            $args = [
+                'TableName'         => $tableName,
+                'Item'              => $this->convertItem($item),
+            ];
+
+            if (! empty($expected)) $item['Expected'] = $expected;
+
+            // Put and catch exception with Dynamo's ConditionalCheckFailed
+            try
+            {
+                $this->client->putItem($args);
+
+                return true;
+            }
+
+            catch (ConditionalCheckFailedException $ccf)
+            {
+                return false;
+            }
+        }
+
+        /**
          * Alias for convertItem()
          *
          * @param $items
