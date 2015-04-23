@@ -91,7 +91,7 @@ Namespace Wrappers
         /**
          * Wrapper for BatchGetItem
          * @link http://docs.aws.amazon.com/amazondynamodb/latest/APIReference//API_BatchGetItem.html
-         * 
+         *
          * TODO: usort() needs to be cleaned...
          * TODO: $ddKeys need to be pushed out so they run next pass...
          *
@@ -159,6 +159,9 @@ Namespace Wrappers
         }
 
         /**
+         * Wrapper for Query
+         * @link http://docs.aws.amazon.com/amazondynamodb/latest/APIReference//API_Query.html
+         *
          * @param $tableName
          * @param $keyConditions
          * @param array $options
@@ -183,25 +186,9 @@ Namespace Wrappers
         }
 
         /**
-         * @param $tableName
-         * @param $keyConditions
-         * @param array $options
-         * @return integer|null
-         */
-        public function count($tableName, $keyConditions, array $options = [])
-        {
-            $args = [
-                'TableName'         => $tableName,
-                'KeyConditions'     => $keyConditions,
-                'Select'            => 'COUNT',
-            ];
-
-            if (isset($options['IndexName'])) $args['IndexName'] = $options['IndexName'];
-
-            return $this->client->query($args) ['Count'];
-        }
-
-        /**
+         * Wrapper for Scan
+         * @link http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html
+         *
          * @param $tableName
          * @param $filter
          * @param null $limit
@@ -223,6 +210,31 @@ Namespace Wrappers
         }
 
         /**
+         * Wrapper for Query with `SELECT` param as `COUNT`
+         * @link http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html
+         *
+         * @param $tableName
+         * @param $keyConditions
+         * @param array $options
+         * @return integer|null
+         */
+        public function count($tableName, $keyConditions, array $options = [])
+        {
+            $args = [
+                'TableName'         => $tableName,
+                'KeyConditions'     => $keyConditions,
+                'Select'            => 'COUNT',
+            ];
+
+            if (isset($options['IndexName'])) $args['IndexName'] = $options['IndexName'];
+
+            return $this->client->query($args) ['Count'];
+        }
+
+        /**
+         * Wrapper for PutItem
+         * @link http://docs.aws.amazon.com/amazondynamodb/latest/APIReference//API_PutItem.html
+         *
          * @param $tableName
          * @param $item
          * @param array $expected
@@ -253,6 +265,9 @@ Namespace Wrappers
         }
 
         /**
+         * Wrapper for BatchWriteItem
+         * @link http://docs.aws.amazon.com/amazondynamodb/latest/APIReference//API_BatchWriteItem.html
+         *
          * @param $tableName
          * @param $items
          * @return mixed
@@ -263,6 +278,9 @@ Namespace Wrappers
         }
 
         /**
+         * Wrapper for UpdateItem
+         * @link http://docs.aws.amazon.com/amazondynamodb/latest/APIReference//API_UpdateItem.html
+         *
          * @param $tableName
          * @param $key
          * @param $update
@@ -298,6 +316,9 @@ Namespace Wrappers
         }
 
         /**
+         * Wrapper for DeleteItem
+         * @link http://docs.aws.amazon.com/amazondynamodb/latest/APIReference//API_DeleteItem.html
+         *
          * @param $tableName
          * @param $key
          * @return array|null
@@ -317,6 +338,9 @@ Namespace Wrappers
         }
 
         /**
+         * Wrapper for BatchWriteItem
+         * @link http://docs.aws.amazon.com/amazondynamodb/latest/APIReference//API_BatchWriteItem.html
+         *
          * @param $tableName
          * @param $keys
          * @return bool
@@ -327,7 +351,8 @@ Namespace Wrappers
         }
 
         /**
-         * Creates a DynamoDB table based on params.
+         * Wrapper for CreateTable
+         * @link http://docs.aws.amazon.com/amazondynamodb/latest/APIReference//API_BatchWriteItem.html
          *
          * @param $tableName
          * @param $hashKey
@@ -410,7 +435,8 @@ Namespace Wrappers
         }
 
         /**
-         * Drops table.
+         * Wrapper for DeleteTable
+         * @link http://docs.aws.amazon.com/amazondynamodb/latest/APIReference//API_DeleteTable.html
          *
          * @param $tableName
          */
@@ -421,7 +447,8 @@ Namespace Wrappers
         }
 
         /**
-         * Empties a table
+         * Wrappers for `DescribeTable` and `DeleteItem`
+         * @link http://docs.aws.amazon.com/amazondynamodb/latest/APIReference//API_DescribeTable.html
          *
          * @param $tableName
          */
@@ -488,6 +515,15 @@ Namespace Wrappers
             return $converted;
         }
 
+        /**
+         * Implementation of BatchWriteItem
+         * http://docs.aws.amazon.com/amazondynamodb/latest/APIReference//API_BatchWriteItem.html
+         *
+         * @param $requestType
+         * @param $tableName
+         * @param $items
+         * @return bool
+         */
         protected function writeBatch($requestType, $tableName, $items)
         {
             $entityKeyName = ('PutRequest' === $requestType)
@@ -508,7 +544,7 @@ Namespace Wrappers
             {
                 $targetRequests = array_splice($requests, 0, 25);
 
-                $result = $this->client->writeBatchItem([
+                $result = $this->client->batchWriteItem([
                     'RequestItems' => [
                         $tableName => $targetRequests,
                     ]
