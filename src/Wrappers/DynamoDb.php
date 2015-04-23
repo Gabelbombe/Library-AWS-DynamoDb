@@ -48,6 +48,62 @@ Namespace Wrappers
         }
 
         /**
+         * TODO: usort() needs to be cleaned...
+         * TODO: $ddKeys need to be pushed out so they run next pass...
+         *
+         * @param $tableName
+         * @param $keys
+         * @param array $options
+         * @return array
+         * @throws \Exception
+         */
+        public function getBatch($tableName, $keys, array $options = [])
+        {
+            $results =
+            $ddbKeys = [];
+
+            foreach ($keys AS $k) $ddbKeys[] = $this->convertAttributes($k);
+
+            while (count($ddbKeys) > 0)
+            {
+                $targetKeys = array_splice($ddbKeys, 0, 100);
+                $result = $this->client->batchGetItem([
+                    'RequestItems'  => [
+                        $tableName  => ['Keys' => $targetKeys]
+                    ]
+                ]);
+            }
+
+            $items   = $result->getPath("Responses/{$tableName}");
+            $results = array_merge($results, $this->convertItems($items));
+
+            // If some keys are not processed, attempt again on next request.
+            $unprocessedKeys = $result->getPath("UnprocessedKeys/{$tableName}");
+            if (count($unprocessedKeys) > 0)
+            {
+                // Goes nowhere ATM....
+                $ddbKeys = array_merge($ddbKeys, $unprocessedKeys);
+            }
+
+            if (isset($options['Order']))
+            {
+                if (! isset($options['Order']['Key'])) Throw New \Exception ('Order option requires key.');
+
+                $k  = $options['Order']['Key'];
+                $v = (isset($options['Order']['Forward']) && ! $options['Order']['Forward'])
+                    ? ['b', 'a']
+                    : ['a', 'b'];
+
+                usort($results, function () USE ($k, $v) // not sure if this is corr?
+                {
+                    return ($v[0][$k] - $v[1][$k]);
+                });
+            }
+
+            return $results;
+        }
+
+        /**
          * @param array $item
          * @return array|null
          * @throws \Exception
@@ -70,6 +126,11 @@ Namespace Wrappers
             }
 
             return $converted;
+        }
+
+        protected function convertItems()
+        {
+            // stub out
         }
 
         /**
