@@ -74,6 +74,9 @@ Namespace Wrappers
                 ]);
             }
 
+            // Throws so we can pass regression testing / avoid buggy env during unit tests...
+            if (! isset($result)) Throw New \Exception ('Zero key length on DDB Keys.');
+
             $items   = $result->getPath("Responses/{$tableName}");
             $results = array_merge($results, $this->convertItems($items));
 
