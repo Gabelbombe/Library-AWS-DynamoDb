@@ -32,6 +32,9 @@ Namespace Wrappers
         public function deleteBatch ($tableName, $keys);
 
         // Table Manipulation
+        public function createTable ($tableName, $hashKey,       $rangeKey,      array $options);
+        public function deleteTable ($tableName);
+        public function emptyTable  ($tableName);
 
         // Misc
         public function count       ($tableName, $conditions,  array $options);
@@ -324,7 +327,7 @@ Namespace Wrappers
          * @param null $rangeKey
          * @param null $options
          */
-        public function createTable($tableName, $hashKey, $rangeKey = null, $options = null)
+        public function createTable($tableName, $hashKey, $rangeKey = null, array $options = null)
         {
             $attributeDefinitions =
             $keySchema            = [];
@@ -394,6 +397,71 @@ Namespace Wrappers
 
             $this->client->createTable($args);
             $this->client->waitUntilTableExists(['TableName' => $tableName]);
+        }
+
+        /**
+         * Drops table.
+         *
+         * @param $tableName
+         */
+        public function deleteTable($tableName)
+        {
+            $this->client->deleteTable(['TableName' => $tableName]);
+            $this->client->waitUntilTableNotExists(['TableName' => $tableName]);
+        }
+
+        /**
+         * Empties a table
+         *
+         * @param $tableName
+         */
+        public function emptyTable($tableName)
+        {
+            // Gets table info
+            $result    = $this->client->describeTable(['TableName' => $tableName]);
+            $keySchema = $result['TableName']['KeySchema'];
+            foreach ($keySchema AS $schema)
+            {
+                if ('HASH' === $schema['KeyType'])
+                {
+                    $hashKeyName = $schema['AttributeName'];
+                }
+
+                elseif ('RANGE' === $schema['KeyType'])
+                {
+                    $rangeKeyName = $schema['AttributeName'];
+                }
+            }
+
+            // Remove items from our table
+            $scan = $this->client->getIterator('Scan', ['TableName' => $tableName]);
+            foreach ($scan AS $item)
+            {
+                // Set the hash key
+                $hashKeyType = array_key_exists('S', $item[$hashKeyName])
+                    ? 'S'
+                    : 'N';
+
+                $key = [
+                    $hashKeyType => $item[$hashKeyName][$hashKeyType],
+                ];
+
+                if (isset($rangeKeyName))
+                {
+                    $rangeKeyType = array_key_exists('S', $item[$rangeKeyName])
+                        ? 'S'
+                        : 'N';
+
+                    $key[$rangeKeyName] = [
+                        $rangeKeyType => $item[$rangeKeyName][$rangeKeyType],
+                    ];
+                }
+
+                $this->client->deleteItem([
+                    'TableName' => $tableName,
+                    'Key'       => $key,
+                ]);
+            }
         }
 
         /**
