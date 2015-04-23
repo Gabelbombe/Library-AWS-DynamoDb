@@ -6,7 +6,29 @@ Namespace Wrappers
     USE Aws\DynamoDb\DynamoDbClient;
     USE Aws\DynamoDb\Exception\ConditionalCheckFailedException;
 
-    Class DynamoDb
+    Interface WrapperInterface
+    {
+        // Gets
+        public function get      ($tableName, $key,         array $options);
+        public function getBatch ($tableName, array $keys,  array $options);
+
+        // Puts
+        public function put      ($tableName, $item,        array $expected);
+        public function putBatch ($tableName, $items);
+
+        // Queries
+        public function query    ($tableName, $conditions,  array $options);
+
+        // Deletes
+
+        // Table Manipulation
+
+        // Misc
+        public function count    ($tableName, $conditions,  array $options);
+        public function scan     ($tableName, $filter,      $limit);
+    }
+
+    Class DynamoDb Implements WrapperInterface
     {
         protected $client;
 
@@ -57,7 +79,7 @@ Namespace Wrappers
          * @return array
          * @throws \Exception
          */
-        public function getBatch($tableName, $keys, array $options = [])
+        public function getBatch($tableName, array $keys, array $options = [])
         {
             $results =
             $ddbKeys = [];
@@ -213,9 +235,9 @@ Namespace Wrappers
          * @param $items
          * @return mixed
          */
-        public function batchPut($tableName, $items)
+        public function putBatch($tableName, $items)
         {
-            return $this->batchWrite('PutRequest', $tableName, $items);
+            return $this->writeBatch('PutRequest', $tableName, $items);
         }
 
         /**
@@ -270,6 +292,38 @@ Namespace Wrappers
             return $converted;
         }
 
+        protected function writeBatch($requestType, $tableName, $items)
+        {
+            $entityKeyName = ('PutRequest' === $requestType)
+                ? 'Item'
+                : 'Key';
+
+            $requests = [];
+            foreach ($items AS $item)
+            {
+                $requests[] = [
+                    $requestType => [
+                        $entityKeyName => $this->convertAttributes($item)
+                    ]
+                ];
+            }
+
+            while (count($requests) > 0)
+            {
+                $targetRequests = array_splice($requests, 0, 25);
+
+                $result = $this->client->writeBatchItem([
+                    'RequestItems' => [
+                        $tableName => $targetRequests,
+                    ]
+                ]);
+
+
+            }
+
+            return true;
+        }
+
         /**
          * @param array $item
          * @return array|null
@@ -293,6 +347,25 @@ Namespace Wrappers
             }
 
             return $converted;
+        }
+
+        /**
+         * @param array $targets
+         * @return array
+         */
+        protected function convertAttributes(array $targets)
+        {
+            $newTargets = [];
+            foreach ($targets AS $k => $v)
+            {
+                $attrComponents = $this->convertComponents($k);
+
+                $newTargets[$attrComponents[0]] = [
+                    $attrComponents[1] = $this->asString($v)
+                ];
+            }
+
+            return $newTargets;
         }
 
         /**
@@ -384,25 +457,6 @@ Namespace Wrappers
             }
 
             return $ddbConditions;
-        }
-
-        /**
-         * @param array $targets
-         * @return array
-         */
-        protected function convertAttributes(array $targets)
-        {
-            $newTargets = [];
-            foreach ($targets AS $k => $v)
-            {
-                $attrComponents = $this->convertComponents($k);
-
-                $newTargets[$attrComponents[0]] = [
-                    $attrComponents[1] = $this->asString($v)
-                ];
-            }
-
-            return $newTargets;
         }
 
         /**
