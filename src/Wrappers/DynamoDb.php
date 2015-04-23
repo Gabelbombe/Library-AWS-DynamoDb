@@ -329,7 +329,7 @@ Namespace Wrappers
          * @param $tableName
          * @param $hashKey
          * @param null $rangeKey
-         * @param null $options
+         * @param array $options
          */
         public function createTable($tableName, $hashKey, $rangeKey = null, array $options = null)
         {
