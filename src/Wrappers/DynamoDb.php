@@ -316,6 +316,11 @@ Namespace Wrappers
             return $newTargets;
         }
 
+        /**
+         * @param $conditions
+         * @return array
+         * @throws \Exception
+         */
         protected function convertConditions($conditions)
         {
             $ddbConditions = [];
@@ -348,9 +353,37 @@ Namespace Wrappers
                         [ $attrType => $this->asString($value[0]) ],
                         [ $attrType => $this->asString($value[1]) ],
                     ];
-                } elseif ('IN' === $v[0])
-                    <<<<<<<<<<<<<<<<<<<<<380>>>>>>>>>>>>>>>>>>>>>>
+                }
+
+                elseif ('IN' === $v[0])
+                {
+                    $attributeValueList = [];
+                    foreach ($value AS $v)
+                    {
+                        $attributeValueList[] = [ $attrType => $this->asString($v) ];
+                    }
+                }
+
+                elseif (('NOT_NULL' || 'NULL') === $v[0])
+                {
+                    $attributeValueList = null;
+                }
+
+                else
+                {
+                    $attributeValueList = [
+                        [ $attrType => $this->asString($v) ]
+                    ];
+                }
+
+                // construct key conditions for Dynamo
+                $ddbConditions[$attrName] = [
+                    'AttributeValueList'    => $attributeValueList,
+                    'ComparisonOperator'    => $comparisonOperator,
+                ];
             }
+
+            return $ddbConditions;
         }
 
         /**
