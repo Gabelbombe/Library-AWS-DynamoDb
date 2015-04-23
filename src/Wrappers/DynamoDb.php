@@ -8,6 +8,8 @@ Namespace Wrappers
 
     USE Aws\DynamoDb\DynamoDbClient;
     USE Aws\DynamoDb\Exception\ConditionalCheckFailedException;
+    USE Aws\DynamoDb\Exception\DynamoDbException;
+    use Aws\Glacier\Exception\ResourceNotFoundException;
 
 
     /**
@@ -503,6 +505,28 @@ Namespace Wrappers
                 ]);
             }
         }
+
+        /**
+         * @param $tableName
+         * @return bool
+         */
+        protected function tableExists($tableName)
+        {
+            try
+            {
+                $result = $this->client->describeTable(['TableName' => $tableName]);
+            }
+
+            catch (DynamoDbException $ddbe)
+            {
+                // If you want to be specific you can use something like:
+                // $ddbe->getAwsErrorCode() === ResourceNotFound etc,
+                return false;
+            }
+
+            return true;
+        }
+
 
         /**
          * Alias for convertItem()
