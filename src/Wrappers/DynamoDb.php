@@ -289,7 +289,7 @@ Namespace Wrappers
                 return null;
             }
 
-            if (! isset($item) || empty($item)) Throw New \LogicException('Item was never instantiated.');
+            if (! isset($item) || empty($item)) Throw New \LogicException ('Item was never instantiated.');
 
             return $this->convertItem($item['Attributes']);
         }
@@ -330,6 +330,7 @@ Namespace Wrappers
          * @param $hashKey
          * @param null $rangeKey
          * @param array $options
+         * @throws \LogicException
          */
         public function createTable($tableName, $hashKey, $rangeKey = null, array $options = null)
         {
@@ -394,6 +395,8 @@ Namespace Wrappers
                         'AttributeType' => $lsi['type'],
                     ];
                 }
+
+                if (! isset($localSecondaryIndexes) || empty($localSecondaryIndexes)) Throw New \LogicException ('Local Secondary Index was never instantiated.');
 
                 $args['LocalSecondaryINdexes'] = $localSecondaryIndexes;
                 $args['AttributeDefinitions']  = $attributeDefinitions;
