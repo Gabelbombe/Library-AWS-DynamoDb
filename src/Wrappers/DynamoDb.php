@@ -165,6 +165,7 @@ Namespace Wrappers
          * @param $tableName
          * @param $keyConditions
          * @param array $options
+         * @return array|null
          */
         public function query($tableName, $keyConditions, array $options = [])
         {
@@ -474,6 +475,8 @@ Namespace Wrappers
             $scan = $this->client->getIterator('Scan', ['TableName' => $tableName]);
             foreach ($scan AS $item)
             {
+                if (! isset($hashKeyName) || empty($hashKeyName)) Throw New \LogicException ('Hash Key Name was never instantiated.');
+
                 // Set the hash key
                 $hashKeyType = array_key_exists('S', $item[$hashKeyName])
                     ? 'S'
@@ -557,6 +560,8 @@ Namespace Wrappers
         }
 
         /**
+         * Converts item to a usable Dynamo data reference
+         *
          * @param array $item
          * @return array|null
          * @throws \Exception
@@ -663,9 +668,9 @@ Namespace Wrappers
                 elseif ('IN' === $v[0])
                 {
                     $attributeValueList = [];
-                    foreach ($value AS $v)
+                    foreach ($value AS $av)
                     {
-                        $attributeValueList[] = [ $attrType => $this->asString($v) ];
+                        $attributeValueList[] = [ $attrType => $this->asString($av) ];
                     }
                 }
 
